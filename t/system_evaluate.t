@@ -12,8 +12,8 @@ use Physics::RayTransfer;
   my $sys = Physics::RayTransfer->new();
   isa_ok( $sys, 'Physics::RayTransfer' );
 
-  $sys->add_element( Physics::RayTransfer::Space->new(length => 2) );
-  $sys->add_element( Physics::RayTransfer::Space->new(length => 3) );
+  $sys->add_space(2);
+  $sys->add_space(3);
 
   is( scalar @{ $sys->elements }, 2, "Correct number of elements" );
 
@@ -29,9 +29,9 @@ use Physics::RayTransfer;
   my $sys = Physics::RayTransfer->new();
   isa_ok( $sys, 'Physics::RayTransfer' );
 
-  $sys->add_element( Physics::RayTransfer::Space->new(length => 2) );
-  $sys->add_element( Physics::RayTransfer::Observer->new );
-  $sys->add_element( Physics::RayTransfer::Space->new(length => 3) );
+  $sys->add_space(2);
+  $sys->add_observer;
+  $sys->add_space(3);
 
   is( scalar @{ $sys->elements }, 3, "Correct number of elements" );
 
@@ -47,9 +47,9 @@ use Physics::RayTransfer;
   my $sys = Physics::RayTransfer->new();
   isa_ok( $sys, 'Physics::RayTransfer' );
 
-  $sys->add_element( Physics::RayTransfer::Space->new(length => 2) );
-  $sys->add_element( Physics::RayTransfer::Space->new(length => 3) );
-  $sys->add_element( Physics::RayTransfer::Mirror->new );
+  $sys->add_space(2);
+  $sys->add_space(3);
+  $sys->add_mirror;
 
   is( scalar @{ $sys->elements }, 3, "Correct number of elements" );
 
@@ -65,10 +65,10 @@ use Physics::RayTransfer;
   my $sys = Physics::RayTransfer->new();
   isa_ok( $sys, 'Physics::RayTransfer' );
 
-  $sys->add_element( Physics::RayTransfer::Space->new(length => 2) );
-  $sys->add_element( Physics::RayTransfer::Observer->new );
-  $sys->add_element( Physics::RayTransfer::Space->new(length => 3) );
-  $sys->add_element( Physics::RayTransfer::Mirror->new );
+  $sys->add_space(2);
+  $sys->add_observer;
+  $sys->add_space(3);
+  $sys->add_mirror;
 
   is( scalar @{ $sys->elements }, 4, "Correct number of elements" );
 
@@ -84,9 +84,9 @@ use Physics::RayTransfer;
   my $sys = Physics::RayTransfer->new();
   isa_ok( $sys, 'Physics::RayTransfer' );
 
-  $sys->add_element( Physics::RayTransfer::Mirror->new );
-  $sys->add_element( Physics::RayTransfer::Space->new(length => 2) );
-  $sys->add_element( Physics::RayTransfer::Space->new(length => 3) );
+  $sys->add_mirror;
+  $sys->add_space(2);
+  $sys->add_space(3);
 
   is( scalar @{ $sys->elements }, 3, "Correct number of elements" );
 
@@ -102,10 +102,10 @@ use Physics::RayTransfer;
   my $sys = Physics::RayTransfer->new();
   isa_ok( $sys, 'Physics::RayTransfer' );
 
-  $sys->add_element( Physics::RayTransfer::Mirror->new );
-  $sys->add_element( Physics::RayTransfer::Space->new(length => 2) );
-  $sys->add_element( Physics::RayTransfer::Space->new(length => 3) );
-  $sys->add_element( Physics::RayTransfer::Mirror->new );
+  $sys->add_mirror;
+  $sys->add_space(2);
+  $sys->add_space(3);
+  $sys->add_mirror;
 
   is( scalar @{ $sys->elements }, 4, "Correct number of elements" );
 
