@@ -18,7 +18,7 @@ use Physics::RayTransfer;
   is( scalar @{ $sys->elements }, 2, "Correct number of elements" );
 
   my $expected = Math::MatrixReal->new_from_rows( [[1,5], [0,1]] );
-  my $eval = $sys->evaluate;
+  my $eval = $sys->evaluate->matrix;
 
   ok( $eval - $expected <= 1e-12, "space-space" );
 }
@@ -36,7 +36,7 @@ use Physics::RayTransfer;
   is( scalar @{ $sys->elements }, 3, "Correct number of elements" );
 
   my $expected = Math::MatrixReal->new_from_rows( [[1,2], [0,1]] );
-  my $eval = $sys->evaluate;
+  my $eval = $sys->evaluate->matrix;
 
   ok( $eval - $expected <= 1e-12, "space-obs-space" );
 }
@@ -54,7 +54,7 @@ use Physics::RayTransfer;
   is( scalar @{ $sys->elements }, 3, "Correct number of elements" );
 
   my $expected = Math::MatrixReal->new_from_rows( [[1,10], [0,1]] );
-  my $eval = $sys->evaluate;
+  my $eval = $sys->evaluate->matrix;
 
   ok( $eval - $expected <= 1e-12, "space-space-mirror" );
 }
@@ -73,7 +73,7 @@ use Physics::RayTransfer;
   is( scalar @{ $sys->elements }, 4, "Correct number of elements" );
 
   my $expected = Math::MatrixReal->new_from_rows( [[1,8], [0,1]] );
-  my $eval = $sys->evaluate;
+  my $eval = $sys->evaluate->matrix;
 
   ok( $eval - $expected <= 1e-12, "space-obs-space-mirror" );
 }
@@ -91,7 +91,7 @@ use Physics::RayTransfer;
   is( scalar @{ $sys->elements }, 3, "Correct number of elements" );
 
   my $expected = Math::MatrixReal->new_from_rows( [[1,5], [0,1]] );
-  my $eval = $sys->evaluate;
+  my $eval = $sys->evaluate->matrix;
 
   ok( $eval - $expected <= 1e-12, "mirror-space-space" );
 }
@@ -110,10 +110,11 @@ use Physics::RayTransfer;
   is( scalar @{ $sys->elements }, 4, "Correct number of elements" );
 
   my $expected = Math::MatrixReal->new_from_rows( [[1,10], [0,1]] );
-  my $eval = $sys->evaluate;
+  my $eval = $sys->evaluate->matrix;
 
   ok( $eval - $expected <= 1e-12, "mirror-space-space-mirror (cavity)" );
 }
 
 done_testing;
+
 

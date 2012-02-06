@@ -48,7 +48,8 @@ class Physics::RayTransfer {
 
   method evaluate () {
     my $elements = $self->_construct;
-    return reduce { $a * $b } map { $_->matrix } @$elements;
+    my $matrix = reduce { $a * $b } map { $_->matrix } @$elements;
+    return Physics::RayTransfer::Element->new( matrix => $matrix );
   }
 
   method evaluate_varying (Physics::RayTransfer::Element $elem, ArrayRef $vals) {
