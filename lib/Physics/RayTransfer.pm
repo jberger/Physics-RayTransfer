@@ -23,11 +23,11 @@ class Physics::RayTransfer {
   }
 
   method add_space (Num $length?) {
-    my $lens = Physics::RayTransfer::Space->new( 
+    my $space = Physics::RayTransfer::Space->new( 
       (defined $length) ? ( length => $length ) : ()
     );
-    $self->add_element($lens);
-    return $lens;
+    $self->add_element($space);
+    return $space;
   }
 
   method add_mirror (Num $radius?) {
@@ -52,22 +52,22 @@ class Physics::RayTransfer {
     return Physics::RayTransfer::Element->new( matrix => $matrix );
   }
 
-  method evaluate_varying (Physics::RayTransfer::Element $elem, ArrayRef $vals) {
+  method evaluate_parameterized (ArrayRef $vals) {
     my $elements = $self->_construct;
-    return [ map { 
+    return map { 
       my $val = $_;
       reduce { $a * $b } 
-        map { $_ == $elem ? $_->get_matrix($val) : $_->matrix } 
-        @$elements;
-    } @$vals ];
+        map { $_->get($val) }
+        @$elements 
+    } @$vals;
   }
 
   method _construct () {
     my @orig = @{ $self->elements };
 
     # see if system begins(left) and/or ends(right) with mirror
-    my $left_mirror = $orig[0]->isa('Physics::RayTransfer::Mirror');
-    my $right_mirror = $orig[-1]->isa('Physics::RayTransfer::Mirror');
+    my $left_mirror = shift @orig if $orig[0]->isa('Physics::RayTransfer::Mirror');
+    my $right_mirror = pop @orig if $orig[-1]->isa('Physics::RayTransfer::Mirror');
 
     # see if an observer object exists
     my $has_observer = grep { $_->isa('Physics::RayTransfer::Observer') } @orig;
@@ -77,12 +77,10 @@ class Physics::RayTransfer {
     # create an observer "at the end" for several cases
     unless ($has_observer) {
       my $obs = Physics::RayTransfer::Observer->new();
-      if (! $right_mirror) {
-        push @orig, $obs;
-      } elsif ( ! $left_mirror ) {
+      if ( $right_mirror and not $left_mirror) {
         unshift @orig, $obs;
       } else {
-        splice @orig, -1, 0, $obs;
+        push @orig, $obs;
       }
     }
 
@@ -108,11 +106,11 @@ class Physics::RayTransfer {
     my @elements;
     if ($left_mirror and $right_mirror) {
       #cavity begins and ends at observer
-      push @elements, @right, reverse(@right), reverse(@left), @left;
+      push @elements, @right, $right_mirror, reverse(@right), reverse(@left), $left_mirror, @left;
     } else {
       push @elements, @left;
       if ($right_mirror) {
-        push @elements, @right, reverse(@right);
+        push @elements, @right, $right_mirror, reverse(@right);
       }
     }
 
@@ -131,12 +129,49 @@ class Physics::RayTransfer::Element {
     lazy => 1,
   );
 
+  has 'parameter' => (
+    isa => 'CodeRef',
+    is => 'rw',
+    predicate => 'has_parameter',
+  );
+
   method _build_matrix () {
     return Math::MatrixReal->new_diag([1,1]);
   }
 
-  method get_matrix () {
+  method get_parameterized (Num $val?) {
     return $self->matrix;
+  }
+
+  method get (Num $val?) {
+    if (defined $val and $self->has_parameter) {
+      my $param_val = $self->parameter->($val);
+      return $self->get_parameterized($param_val);
+    } else {
+      return $self->matrix;
+    }
+  }
+
+  method a () { $self->matrix->element(1,1) }
+  method b () { $self->matrix->element(1,2) }
+  method c () { $self->matrix->element(2,1) }
+  method d () { $self->matrix->element(2,2) }
+
+  method w (Num $lambda) {
+    my $stability = $self->stability($lambda);
+    return undef if abs($stability) >= 1;
+
+    return sqrt( 
+      abs($self->b) * $lambda / (4*atan2(1,1))
+      * sqrt(
+        1 / ( 1 - $stability ** 2 )
+      )
+    );
+  }
+
+  method stability (Num $lambda) {
+    my $stability = ($self->a + $self->d) / 2;
+    return $stability;
   }
 }
 
@@ -160,7 +195,7 @@ class Physics::RayTransfer::Space
     return Math::MatrixReal->new_from_rows( [[ 1, $length], [0, 1]] );
   }
 
-  override get_matrix (Num $length) {
+  override get_parameterized (Num $length) {
     return $self->_build_space($length);
   }
 }
@@ -189,7 +224,7 @@ class Physics::RayTransfer::Mirror
     return Math::MatrixReal->new_from_rows( [[ 1, 0], [$c, 1]] );
   }
 
-  override get_matrix (Num $c) {
+  override get_parameterized (Num $c) {
     return $self->_build_from_c($c);
   }
 }
@@ -217,7 +252,7 @@ class Physics::RayTransfer::Lens
     return Math::MatrixReal->new_from_rows( [[ 1, 0], [$c, 1]] );
   }
 
-  override get_matrix (Num $c) {
+  override get_parameterized (Num $c) {
     return $self->_build_from_c($c);
   }
 }
