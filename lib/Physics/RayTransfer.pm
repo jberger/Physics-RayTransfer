@@ -48,17 +48,19 @@ class Physics::RayTransfer {
 
   method evaluate () {
     my $elements = $self->_construct;
-    my $matrix = reduce { $a * $b } map { $_->matrix } @$elements;
+    my $matrix = reduce { $a * $b } map { $_->get } @$elements;
     return Physics::RayTransfer::Element->new( matrix => $matrix );
   }
 
   method evaluate_parameterized (ArrayRef $vals) {
     my $elements = $self->_construct;
-    return map { 
+     map { 
       my $val = $_;
-      reduce { $a * $b } 
+      my $matrix = 
+        reduce { $a * $b } 
         map { $_->get($val) }
-        @$elements 
+        @$elements;
+      [ $val, Physics::RayTransfer::Element->new( matrix => $matrix ) ];
     } @$vals;
   }
 
