@@ -229,9 +229,43 @@ This class is the base class of all the individual elements of the system. Furth
 
 =head3 METHODS
 
+=over
+
 =cut
 
 class Physics::RayTransfer::Element {
+
+=item new([%attributes]) 
+
+Constructor. Can accept a hash of attributes. Those attributes also have accessor methods of the same name. They are:
+
+=over
+
+=item a
+
+=item b
+
+=item c
+
+=item d
+
+These are the holders for the C<a> (1,1), C<b> (1,2), C<c> (2,1), and C<d> (2,2) matrix slots. C<a> and C<d> default to C<1>. C<b> and C<c> default to C<0> but this can be overridden by subclasses.
+
+=item parameter
+
+This is a coderef which maps an arbitrary input parameter to the relevant matrix element (either C<b> or C<c> depending on element). This allows for plotting the behavior of systems in terms of arbitrary parameters in multiple elements. For example one might want to move a lens across a space of constant length C<10>:
+
+ $sys->add_space->parameter(sub{shift});
+ $sys->add_lens(2);
+ $sys->add_space->parameter(sub{10-shift});
+
+ my $d = [ map { $_ / 10 } (0..100) ];
+
+ my @data = $sys->evaluate_parameterized($d);
+
+=back
+
+=cut
 
   has 'a' => ( isa => 'Num', is => 'rw', default => 1 );
   has 'b' => ( isa => 'Num', is => 'rw', builder => '_build_b', lazy => 1 );
@@ -247,9 +281,21 @@ class Physics::RayTransfer::Element {
     predicate => 'has_parameter',
   );
 
+=item get_parameterized([Num $val])
+
+This method is meant to be subclassed with the specific behavior of the element in question. The default behavior is to return the object itself (the optional parameter value is ignored in this generic class). Most subclasses will return a new object, one in which the parameterization is used to construct the matrix.
+
+=cut
+
   method get_parameterized (Num $val?) {
     return $self;
   }
+
+=item get([Num $val])
+
+This is the generic dispatcher called when building the composite system. If an optional (numeric) parameter value is passed AND if the object has a parameterization, then it dispatches the object's C<get_parameterized> method. If no parameterization is available the object itself is returned.
+
+=cut
 
   method get (Num $val?) {
     if (defined $val and $self->has_parameter) {
@@ -258,6 +304,38 @@ class Physics::RayTransfer::Element {
     } else {
       return $self;
     }
+  }
+
+=item times (Physics::RayTransfer::Element $right) 
+
+This method performs matrix multiplication between the instance (the left matrix) and the passed in right matrix. The result is a new C<Physics::RayTransfer::Element> object containing the result of the multiplication.
+
+=cut
+
+  method times (Physics::RayTransfer::Element $right) {
+    my $a = $self->a * $right->a + $self->b * $right->c;
+    my $b = $self->a * $right->b + $self->b * $right->d;
+    my $c = $self->c * $right->a + $self->d * $right->c;
+    my $d = $self->c * $right->b + $self->d * $right->d;
+
+    return Physics::RayTransfer::Element->new(
+      a => $a, b => $b, c => $c, d => $d,
+    );
+  }
+
+=item as_arrayref()
+
+A simple diagnostic method which return an array reference of the C<abcd> elements in order (note: this is in 1D C<[a, b, c, d]>).
+
+=cut
+
+  method as_arrayref () {
+    return [$self->a, $self->b, $self->c, $self->d];
+  }
+
+  method stability (Num $lambda) {
+    my $stability = ($self->a + $self->d) / 2;
+    return $stability;
   }
 
   method w (Num $lambda) {
@@ -272,26 +350,11 @@ class Physics::RayTransfer::Element {
     );
   }
 
-  method stability (Num $lambda) {
-    my $stability = ($self->a + $self->d) / 2;
-    return $stability;
-  }
-
-  method times (Physics::RayTransfer::Element $right) {
-    my $a = $self->a * $right->a + $self->b * $right->c;
-    my $b = $self->a * $right->b + $self->b * $right->d;
-    my $c = $self->c * $right->a + $self->d * $right->c;
-    my $d = $self->c * $right->b + $self->d * $right->d;
-
-    return Physics::RayTransfer::Element->new(
-      a => $a, b => $b, c => $c, d => $d,
-    );
-  }
-
-  method as_arrayref () {
-    return [$self->a, $self->b, $self->c, $self->d];
-  }
 }
+
+=pod
+
+=back
 
 =head2 Physics::RayTransfer::Observer
 
