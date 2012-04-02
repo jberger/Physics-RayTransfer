@@ -48,19 +48,18 @@ class Physics::RayTransfer {
 
   method evaluate () {
     my $elements = $self->_construct;
-    my $matrix = reduce { $a * $b } map { $_->get } @$elements;
-    return Physics::RayTransfer::Element->new( matrix => $matrix );
+    return reduce { $a->times($b) } map { $_->get } @$elements;
   }
 
   method evaluate_parameterized (ArrayRef $vals) {
     my $elements = $self->_construct;
      map { 
       my $val = $_;
-      my $matrix = 
-        reduce { $a * $b } 
+      my $new = 
+        reduce { $a->times($b) } 
         map { $_->get($val) }
         @$elements;
-      [ $val, Physics::RayTransfer::Element->new( matrix => $matrix ) ];
+      [ $val, $new ];
     } @$vals;
   }
 
@@ -122,14 +121,14 @@ class Physics::RayTransfer {
 }
 
 class Physics::RayTransfer::Element {
-  use Math::MatrixReal;
 
-  has 'matrix' => ( 
-    isa => 'Math::MatrixReal',
-    is => 'rw', 
-    builder => '_build_matrix',
-    lazy => 1,
-  );
+  has 'a' => ( isa => 'Num', is => 'rw', default => 1 );
+  has 'b' => ( isa => 'Num', is => 'rw', builder => '_build_b', lazy => 1 );
+  has 'c' => ( isa => 'Num', is => 'rw', builder => '_build_c', lazy => 1 );
+  has 'd' => ( isa => 'Num', is => 'rw', default => 1 );
+
+  method _build_b () { 0 };
+  method _build_c () { 0 };
 
   has 'parameter' => (
     isa => 'CodeRef',
@@ -137,12 +136,8 @@ class Physics::RayTransfer::Element {
     predicate => 'has_parameter',
   );
 
-  method _build_matrix () {
-    return Math::MatrixReal->new_diag([1,1]);
-  }
-
   method get_parameterized (Num $val?) {
-    return $self->matrix;
+    return $self;
   }
 
   method get (Num $val?) {
@@ -150,14 +145,9 @@ class Physics::RayTransfer::Element {
       my $param_val = $self->parameter->($val);
       return $self->get_parameterized($param_val);
     } else {
-      return $self->matrix;
+      return $self;
     }
   }
-
-  method a () { $self->matrix->element(1,1) }
-  method b () { $self->matrix->element(1,2) }
-  method c () { $self->matrix->element(2,1) }
-  method d () { $self->matrix->element(2,2) }
 
   method w (Num $lambda) {
     my $stability = $self->stability($lambda);
@@ -175,6 +165,17 @@ class Physics::RayTransfer::Element {
     my $stability = ($self->a + $self->d) / 2;
     return $stability;
   }
+
+  method times (Physics::RayTransfer::Element $right) {
+    my $a = $self->a * $right->a + $self->b * $right->c;
+    my $b = $self->a * $right->b + $self->b * $right->d;
+    my $c = $self->c * $right->a + $self->d * $right->c;
+    my $d = $self->c * $right->b + $self->d * $right->d;
+
+    return Physics::RayTransfer::Element->new(
+      a => $a, b => $b, c => $c, d => $d,
+    );
+  }
 }
 
 class Physics::RayTransfer::Observer
@@ -185,31 +186,23 @@ class Physics::RayTransfer::Observer
 class Physics::RayTransfer::Space
   extends Physics::RayTransfer::Element {
 
-  use Math::MatrixReal;
-
   has 'length' => (isa => 'Num', is => 'rw', default => 0);
 
-  override _build_matrix () {
-    return $self->_build_space($self->length);
-  }
-
-  method _build_space (Num $length) {
-    return Math::MatrixReal->new_from_rows( [[ 1, $length], [0, 1]] );
+  override _build_b () {
+    return $self->length;
   }
 
   override get_parameterized (Num $length) {
-    return $self->_build_space($length);
+    return __PACKAGE__->new( b => $length );
   }
 }
 
 class Physics::RayTransfer::Mirror
   extends Physics::RayTransfer::Element {
 
-  use Math::MatrixReal;
-
   has 'radius' => (isa => 'Num', is => 'rw', predicate => 'has_radius');
 
-  override _build_matrix () {
+  method _radius_to_c () {
     my $c_term;
 
     if ($self->has_radius) {
@@ -218,27 +211,25 @@ class Physics::RayTransfer::Mirror
       $c_term = 0;
     }
 
-    return $self->_build_from_c( $c_term );
-
+    return $c_term;
   }
 
-  method _build_from_c (Num $c) {
-    return Math::MatrixReal->new_from_rows( [[ 1, 0], [$c, 1]] );
+  override _build_c () {
+    my $c = $self->_radius_to_c;
+    return $c;
   }
 
   override get_parameterized (Num $c) {
-    return $self->_build_from_c($c);
+    return __PACKAGE__->new( c => $c );
   }
 }
 
 class Physics::RayTransfer::Lens
   extends Physics::RayTransfer::Element {
 
-  use Math::MatrixReal;
-
   has 'f' => (isa => 'Num', is => 'rw', predicate => 'has_f');
 
-  override _build_matrix (Num $f?) {
+  method _f_to_c () {
     my $c_term;
 
     if ($self->has_f) {
@@ -247,15 +238,16 @@ class Physics::RayTransfer::Lens
       $c_term = 0;
     }
 
-    return $self->_build_from_c($c_term);
+    return $c_term;
   }
 
-  method _build_from_c (Num $c) {
-    return Math::MatrixReal->new_from_rows( [[ 1, 0], [$c, 1]] );
+  override _build_c () {
+    my $c = $self->_f_to_c;
+    return Math::MatrixReal->new_from_rows( $c );
   }
 
   override get_parameterized (Num $c) {
-    return $self->_build_from_c($c);
+    return __PACKAGE__->new( c => $c );
   }
 }
 
