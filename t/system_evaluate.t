@@ -2,7 +2,6 @@ use strict;
 use warnings;
 
 use Test::More;
-use Math::MatrixReal;
 
 use Physics::RayTransfer;
 
@@ -17,10 +16,10 @@ use Physics::RayTransfer;
 
   is( scalar @{ $sys->elements }, 2, "Correct number of elements" );
 
-  my $expected = Math::MatrixReal->new_from_rows( [[1,5], [0,1]] );
-  my $eval = $sys->evaluate->get;
+  my $expected = [1,5,0,1];
+  my $eval = $sys->evaluate;
 
-  ok( $eval - $expected <= 1e-12, "space-space" );
+  is_deeply( $eval->as_arrayref, $expected, "space-space" );
 }
 
 {
@@ -35,10 +34,10 @@ use Physics::RayTransfer;
 
   is( scalar @{ $sys->elements }, 3, "Correct number of elements" );
 
-  my $expected = Math::MatrixReal->new_from_rows( [[1,2], [0,1]] );
-  my $eval = $sys->evaluate->get;
+  my $expected = [1,2,0,1];
+  my $eval = $sys->evaluate;
 
-  ok( $eval - $expected <= 1e-12, "space-obs-space" );
+  is_deeply( $eval->as_arrayref, $expected, "space-obs-space" );
 }
 
 {
@@ -53,10 +52,10 @@ use Physics::RayTransfer;
 
   is( scalar @{ $sys->elements }, 3, "Correct number of elements" );
 
-  my $expected = Math::MatrixReal->new_from_rows( [[1,10], [0,1]] );
-  my $eval = $sys->evaluate->get;
+  my $expected = [1,10,0,1];
+  my $eval = $sys->evaluate;
 
-  ok( $eval - $expected <= 1e-12, "space-space-mirror" );
+  is_deeply( $eval->as_arrayref, $expected, "space-space-mirror" );
 }
 
 {
@@ -72,10 +71,10 @@ use Physics::RayTransfer;
 
   is( scalar @{ $sys->elements }, 4, "Correct number of elements" );
 
-  my $expected = Math::MatrixReal->new_from_rows( [[1,8], [0,1]] );
-  my $eval = $sys->evaluate->get;
+  my $expected = [1,8,0,1];
+  my $eval = $sys->evaluate;
 
-  ok( $eval - $expected <= 1e-12, "space-obs-space-mirror" );
+  is_deeply( $eval->as_arrayref, $expected, "space-obs-space-mirror" );
 }
 
 {
@@ -90,10 +89,10 @@ use Physics::RayTransfer;
 
   is( scalar @{ $sys->elements }, 3, "Correct number of elements" );
 
-  my $expected = Math::MatrixReal->new_from_rows( [[1,5], [0,1]] );
-  my $eval = $sys->evaluate->get;
+  my $expected = [1,5,0,1];
+  my $eval = $sys->evaluate;
 
-  ok( $eval - $expected <= 1e-12, "mirror-space-space" );
+  is_deeply( $eval->as_arrayref, $expected, "mirror-space-space" );
 }
 
 {
@@ -109,10 +108,10 @@ use Physics::RayTransfer;
 
   is( scalar @{ $sys->elements }, 4, "Correct number of elements" );
 
-  my $expected = Math::MatrixReal->new_from_rows( [[1,10], [0,1]] );
-  my $eval = $sys->evaluate->get;
+  my $expected = [1,10,0,1];
+  my $eval = $sys->evaluate;
 
-  ok( $eval - $expected <= 1e-12, "mirror-space-space-mirror (cavity)" );
+  is_deeply( $eval->as_arrayref, $expected, "mirror-space-space-mirror (cavity)" );
 }
 
 done_testing;

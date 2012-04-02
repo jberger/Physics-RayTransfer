@@ -16,8 +16,8 @@ $sys->add_mirror(8);
 my $equiv = $sys->evaluate;
 my $lambda = 523e-7;
 
-my $expected = Math::MatrixReal->new_from_rows( [[1, 10], [-0.25, -1.5]] );
-ok( $equiv->matrix - $expected <= 1e-12, "Equivalent element" );
+my $expected = [1, 10, -0.25, -1.5];
+is_deeply($equiv->as_arrayref, $expected, "Equivalent element" );
 
 ok( $equiv->stability($lambda), "Cavity is stable");
 ok( $equiv->w($lambda), "Cavity has a spot size at observer");
