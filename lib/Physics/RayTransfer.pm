@@ -255,3 +255,38 @@ class Physics::RayTransfer::Lens
   }
 }
 
+__END__
+
+=head1 NAME
+
+Physics::RayTransfer - Object-oriented ray transfer analysis
+
+=head1 SYNOPSIS
+
+=head1 DESCRIPTION
+
+=head1 SEE ALSO
+
+=over
+
+=item *
+
+=back
+
+=head1 SOURCE REPOSITORY
+
+L<http://github.com/jberger/Physics-RayTransfer>
+
+=head1 AUTHOR
+
+Joel Berger, E<lt>joel.a.berger@gmail.comE<gt>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (C) 2012 by Joel Berger
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+
+
