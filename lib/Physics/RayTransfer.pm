@@ -176,6 +176,10 @@ class Physics::RayTransfer::Element {
       a => $a, b => $b, c => $c, d => $d,
     );
   }
+
+  method as_arrayref () {
+    return [$self->a, $self->b, $self->c, $self->d];
+  }
 }
 
 class Physics::RayTransfer::Observer
@@ -243,7 +247,7 @@ class Physics::RayTransfer::Lens
 
   override _build_c () {
     my $c = $self->_f_to_c;
-    return Math::MatrixReal->new_from_rows( $c );
+    return $c;
   }
 
   override get_parameterized (Num $c) {
