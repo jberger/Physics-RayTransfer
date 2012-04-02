@@ -1,3 +1,0 @@
-The beginnings of a OO-style ray transfer calculation in Perl.
-
-Uses MooseX::Declare with Method::Signatures::Modifiers and Math::MatrixReal for the underlying RTM mechanism.
