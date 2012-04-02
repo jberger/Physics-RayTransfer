@@ -12,7 +12,7 @@ use PDL::Graphics::Gnuplot qw/plot/;
 
 my $sys = Physics::RayTransfer->new();
 $sys->add_mirror;
-$sys->add_space->parameter(sub{shift});
+$sys->add_space->parameter(sub{shift}); #$d
 $sys->add_mirror(8);
 
 my $d = [ map { $_ / 10 } (0..100) ];

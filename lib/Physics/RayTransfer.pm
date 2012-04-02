@@ -1,3 +1,38 @@
+=head1 NAME
+
+Physics::RayTransfer - Object-oriented ray transfer analysis
+
+=head1 SYNOPSIS
+
+ use Physics::RayTransfer;
+
+ my $sys = Physics::RayTransfer->new();
+ $sys->add_mirror;
+ $sys->add_space->parameter(sub{shift});
+ $sys->add_mirror(8);
+
+ my $d = [ map { $_ / 10 } (0..100) ];
+
+ my @data = 
+   map { $_->[1]->w(1063e-7) }
+   $sys->evaluate_parameterized($d);
+
+=head1 DESCRIPTION
+
+This physics module is a helper for creating a system of ray transfer matrices (RTM) for analyzing optical systems. The most useful functionality is related to laser cavity stability analysis.
+
+=head1 ClASSES
+
+=head2 Physics::RayTransfer
+
+This class provides the main simulation object, which houses the element objects and does the overall calculations.
+
+=head3 METHODS
+
+=over
+
+=cut
+
 use MooseX::Declare;
 use Method::Signatures::Modifiers;
 
@@ -5,6 +40,20 @@ class Physics::RayTransfer {
 
   use Carp;
   use List::Util qw/reduce/;
+
+=item new([%options])
+
+Constructor. Can accept a hash of options, currently the only option key is C<elements> which takes an array reference of C<Physics::RayTransfer::Element> objects, ordered left-to-right.
+
+=item elements()
+
+Accessor for the array of elements which are currently a part of the system. These are implicitly ordered left-to-right.
+
+=item add_element( Physics::RayTransfer::Element $object )
+
+A helper method to push a manually constructed C<Physics::RayTransfer::Element> onto the C<elements> attribute.
+
+=cut
 
   has 'elements' => (
     isa => 'ArrayRef[Physics::RayTransfer::Element]',
@@ -16,11 +65,23 @@ class Physics::RayTransfer {
     },
   );
 
+=item add_observer()
+
+Shortcut method for adding a C<Physics::RayTransfer::Observer> object as the next element in the system (on the right side). Returns the object added.
+
+=cut
+
   method add_observer () {
     my $obs = Physics::RayTransfer::Observer->new();
     $self->add_element( $obs );
     return $obs;
   }
+
+=item add_space( [ Num $length ] )
+
+Shortcut method for adding a C<Physics::RayTransfer::Space> object as the next element in the system (on the right side). Optionally takes a number representing the length of the object. Returns the object added.
+
+=cut
 
   method add_space (Num $length?) {
     my $space = Physics::RayTransfer::Space->new( 
@@ -30,6 +91,12 @@ class Physics::RayTransfer {
     return $space;
   }
 
+=item add_mirror( [ Num $radius ] )
+
+Shortcut method for adding a C<Physics::RayTransfer::Mirror> object as the next element in the system (on the right side). Optionally takes a number representing the radius of curvature of the object's mirror. Returns the object added.
+
+=cut
+
   method add_mirror (Num $radius?) {
     my $mirror = Physics::RayTransfer::Mirror->new(
       (defined $radius) ? ( radius => $radius ) : ()
@@ -37,6 +104,12 @@ class Physics::RayTransfer {
     $self->add_element($mirror);
     return $mirror;
   }
+
+=item add_lens( [ Num $focal_length ] )
+
+Shortcut method for adding a C<Physics::RayTransfer::Lens> object as the next element in the system (on the right side). Optionally takes a number representing the focal length of the object's lens. Returns the object added.
+
+=cut
 
   method add_lens (Num $f?) {
     my $lens = Physics::RayTransfer::Lens->new(
@@ -53,7 +126,7 @@ class Physics::RayTransfer {
 
   method evaluate_parameterized (ArrayRef $vals) {
     my $elements = $self->_construct;
-     map { 
+    map { 
       my $val = $_;
       my $new = 
         reduce { $a->times($b) } 
@@ -120,6 +193,14 @@ class Physics::RayTransfer {
 
 }
 
+=pod
+
+=back
+
+=head2 Physics::RayTransfer::Element
+
+=cut
+
 class Physics::RayTransfer::Element {
 
   has 'a' => ( isa => 'Num', is => 'rw', default => 1 );
@@ -182,10 +263,18 @@ class Physics::RayTransfer::Element {
   }
 }
 
+=head2 Physics::RayTransfer::Observer
+
+=cut
+
 class Physics::RayTransfer::Observer
   extends Physics::RayTransfer::Element {
 
 }
+
+=head2 Physics::RayTransfer::Space
+
+=cut
 
 class Physics::RayTransfer::Space
   extends Physics::RayTransfer::Element {
@@ -200,6 +289,10 @@ class Physics::RayTransfer::Space
     return __PACKAGE__->new( b => $length );
   }
 }
+
+=head2 Physics::RayTransfer::Mirror
+
+=cut
 
 class Physics::RayTransfer::Mirror
   extends Physics::RayTransfer::Element {
@@ -228,6 +321,10 @@ class Physics::RayTransfer::Mirror
   }
 }
 
+=head2 Physics::RayTransfer::Lens
+
+=cut
+
 class Physics::RayTransfer::Lens
   extends Physics::RayTransfer::Element {
 
@@ -254,16 +351,6 @@ class Physics::RayTransfer::Lens
     return __PACKAGE__->new( c => $c );
   }
 }
-
-__END__
-
-=head1 NAME
-
-Physics::RayTransfer - Object-oriented ray transfer analysis
-
-=head1 SYNOPSIS
-
-=head1 DESCRIPTION
 
 =head1 SEE ALSO
 
