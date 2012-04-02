@@ -41,13 +41,17 @@ class Physics::RayTransfer {
   use Carp;
   use List::Util qw/reduce/;
 
-=item new([%options])
+=item new([%attributes])
 
-Constructor. Can accept a hash of options, currently the only option key is C<elements> which takes an array reference of C<Physics::RayTransfer::Element> objects, ordered left-to-right.
+Constructor. Can accept a hash of attributes. Those attributes also have accessor methods of the same name. They are:
 
-=item elements()
+=over
 
-Accessor for the array of elements which are currently a part of the system. These are implicitly ordered left-to-right.
+=item elements
+
+An array reference of C<Physics::RayTransfer::Element> objects, ordered left-to-right. The default is an empty array reference.
+
+=back
 
 =item add_element( Physics::RayTransfer::Element $object )
 
@@ -220,6 +224,10 @@ A more complicated system having a C<Physics::RayTransfer::Mirror> object (hence
 Finally if there are mirrors at both the left and right of the system, this triggers I<cavity> mode, most useful for laser cavity simulation. In cavity mode, light both starts and stops at the observer, making a complete round trip inside the cavity (passing the observer once). If no observer is placed, the observer is implicitly positioned just before the right mirror (assumed to be the output coupler).
 
 =head2 Physics::RayTransfer::Element
+
+This class is the base class of all the individual elements of the system. Further it is the generic class used for when the elements are combined down to a single matrix. Most of the functionality in this class is present in the subclasses, except for some of the constructor defaults.
+
+=head3 METHODS
 
 =cut
 
