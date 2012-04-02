@@ -119,14 +119,26 @@ Shortcut method for adding a C<Physics::RayTransfer::Lens> object as the next el
     return $lens;
   }
 
-  method evaluate () {
+=item evaluate()
+
+Returns a C<Physics::RayTransfer::Element> object which is equivalent to the system as a whole. See L</EVALUATION> for more.
+
+=cut
+
+  method evaluate (ArrayRef $vals?) {
     my $elements = $self->_construct;
     return reduce { $a->times($b) } map { $_->get } @$elements;
   }
 
+=item evaluate_parameterized( ArrayRef $vals )
+
+Takes an array reference of values for the parameterization functions. Returns 2D array (i.e. a list of array references). Foreach value an array reference is returned containg that value and a C<Physics::RayTransfer::Element> object which is equivalent to the system as a whole when that parameter is used for evaluation. See L</EVALUATION> for more.
+
+=cut
+
   method evaluate_parameterized (ArrayRef $vals) {
     my $elements = $self->_construct;
-    map { 
+    return map { 
       my $val = $_;
       my $new = 
         reduce { $a->times($b) } 
@@ -196,6 +208,16 @@ Shortcut method for adding a C<Physics::RayTransfer::Lens> object as the next el
 =pod
 
 =back
+
+=head3 EVALUATION
+
+The evaluation process is perhaps the important part of the simulation. It is at this point that the objects are converted into a series of matricies which are multiplied out to get the equivalent single matrix. This can either be done in a purely numerical way (C<evaluate>) or repeatedly for multiple values of some parameter (C<evaluate_parameterized>). 
+
+The conversion to a series of matricies depends on the layout of your system. The most basic is just a linear array of optical elements. In such a system there are no end mirror objects. The input ray is assumed to originate on the left. If a C<Physics::RayTranser::Observer> object (henceforth called "an observer") is placed somewhere in the system, this is then seen as the endpoint. If no observer is placed one will be assumed on the right side.
+
+A more complicated system having a C<Physics::RayTransfer::Mirror> object (henceforth called "a mirror") as the last element on the right will have its ray start on the left, traverse the system, reflect off the mirror and then return back through the system. An observer will stop the light I<only on the return trip>. If no observer has been placed, one will implicitly exist on the leftmost part of the system, meaning the light will travel from left to right and back to the starting point.
+
+Finally if there are mirrors at both the left and right of the system, this triggers I<cavity> mode, most useful for laser cavity simulation. In cavity mode, light both starts and stops at the observer, making a complete round trip inside the cavity (passing the observer once). If no observer is placed, the observer is implicitly positioned just before the right mirror (assumed to be the output coupler).
 
 =head2 Physics::RayTransfer::Element
 
