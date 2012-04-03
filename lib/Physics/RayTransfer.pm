@@ -21,7 +21,7 @@ Physics::RayTransfer - Object-oriented ray transfer analysis
 
 This physics module is a helper for creating a system of ray transfer matrices (RTM) for analyzing optical systems. The most useful functionality is related to laser cavity stability analysis.
 
-=head1 ClASSES
+=head1 CLASSES
 
 =head2 Physics::RayTransfer
 
@@ -41,7 +41,7 @@ class Physics::RayTransfer {
   use Carp;
   use List::Util qw/reduce/;
 
-=item new([%attributes])
+=item new( [ %attributes ] )
 
 Constructor. Can accept a hash of attributes. Those attributes also have accessor methods of the same name. They are:
 
@@ -235,7 +235,7 @@ This class is the base class of all the individual elements of the system. Furth
 
 class Physics::RayTransfer::Element {
 
-=item new([%attributes]) 
+=item new( [ %attributes ] ) 
 
 Constructor. Can accept a hash of attributes. Those attributes also have accessor methods of the same name. They are:
 
@@ -281,7 +281,7 @@ This is a coderef which maps an arbitrary input parameter to the relevant matrix
     predicate => 'has_parameter',
   );
 
-=item get_parameterized([Num $val])
+=item get_parameterized( [ Num $val ] )
 
 This method is meant to be subclassed with the specific behavior of the element in question. The default behavior is to return the object itself (the optional parameter value is ignored in this generic class). Most subclasses will return a new object, one in which the parameterization is used to construct the matrix.
 
@@ -291,7 +291,7 @@ This method is meant to be subclassed with the specific behavior of the element 
     return $self;
   }
 
-=item get([Num $val])
+=item get( [ Num $val ] )
 
 This is the generic dispatcher called when building the composite system. If an optional (numeric) parameter value is passed AND if the object has a parameterization, then it dispatches the object's C<get_parameterized> method. If no parameterization is available the object itself is returned.
 
@@ -306,7 +306,7 @@ This is the generic dispatcher called when building the composite system. If an 
     }
   }
 
-=item times (Physics::RayTransfer::Element $right) 
+=item times( Physics::RayTransfer::Element $right ) 
 
 This method performs matrix multiplication between the instance (the left matrix) and the passed in right matrix. The result is a new C<Physics::RayTransfer::Element> object containing the result of the multiplication.
 
@@ -333,7 +333,7 @@ A simple diagnostic method which return an array reference of the C<abcd> elemen
     return [$self->a, $self->b, $self->c, $self->d];
   }
 
-=item stability(Num $lambda)
+=item stability( Num $lambda )
 
 This method returns the value of C<(a+d)/2>, this quantity is useful for judging the stability of a laser cavity. It takes a number representing the wavelength of the light used, this should be in the same units as any distances employed.
 
@@ -344,7 +344,7 @@ This method returns the value of C<(a+d)/2>, this quantity is useful for judging
     return $stability;
   }
 
-=item w(Num $lambda)
+=item w( Num $lambda )
 
 This method returns the (Gaussian) spot size of a beam in the cavity at the observer. This is given by C<sqrt( abs(b) * $lambda / pi * sqrt( 1 / ( 1 - stability()**2 ) ) )>. It takes a number representing the wavelength of the light used, this should be in the same units as any distances employed.
 
@@ -477,7 +477,9 @@ class Physics::RayTransfer::Lens
 
 =over
 
-=item *
+=item * L<"Encyclopedia of Laser Physics and Technology"|http://www.rp-photonics.com/abcd_matrix.html>
+
+=item * L<"Wikipedia"|http://en.wikipedia.org/wiki/Ray_transfer_matrix_analysis>
 
 =back
 
