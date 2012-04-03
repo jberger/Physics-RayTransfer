@@ -31,13 +31,17 @@ This class provides the main simulation object, which houses the element objects
 
 =over
 
-=item new([%options])
+=item new([%attributes])
 
-Constructor. Can accept a hash of options, currently the only option key is C<elements> which takes an array reference of C<Physics::RayTransfer::Element> objects, ordered left-to-right.
+Constructor. Can accept a hash of attributes. Those attributes also have accessor methods of the same name. They are:
 
-=item elements()
+=over
 
-Accessor for the array of elements which are currently a part of the system. These are implicitly ordered left-to-right.
+=item elements
+
+An array reference of C<Physics::RayTransfer::Element> objects, ordered left-to-right. The default is an empty array reference.
+
+=back
 
 =item add_element( Physics::RayTransfer::Element $object )
 
@@ -83,13 +87,93 @@ Finally if there are mirrors at both the left and right of the system, this trig
 
 =head2 Physics::RayTransfer::Element
 
-=head2 Physics::RayTransfer::Observer
+This class is the base class of all the individual elements of the system. Further it is the generic class used for when the elements are combined down to a single matrix. Most of the functionality in this class is present in the subclasses, except for some of the constructor defaults.
 
-=head2 Physics::RayTransfer::Space
+=head3 METHODS
 
-=head2 Physics::RayTransfer::Mirror
+=over
 
-=head2 Physics::RayTransfer::Lens
+=item new([%attributes]) 
+
+Constructor. Can accept a hash of attributes. Those attributes also have accessor methods of the same name. They are:
+
+=over
+
+=item a
+
+=item b
+
+=item c
+
+=item d
+
+These are the holders for the C<a> (1,1), C<b> (1,2), C<c> (2,1), and C<d> (2,2) matrix slots. C<a> and C<d> default to C<1>. C<b> and C<c> default to C<0> but this can be overridden by subclasses.
+
+=item parameter
+
+This is a coderef which maps an arbitrary input parameter to the relevant matrix element (either C<b> or C<c> depending on element). This allows for plotting the behavior of systems in terms of arbitrary parameters in multiple elements. For example one might want to move a lens across a space of constant length C<10>:
+
+ $sys->add_space->parameter(sub{shift});
+ $sys->add_lens(2);
+ $sys->add_space->parameter(sub{10-shift});
+
+ my $d = [ map { $_ / 10 } (0..100) ];
+
+ my @data = $sys->evaluate_parameterized($d);
+
+=back
+
+=item get_parameterized([Num $val])
+
+This method is meant to be subclassed with the specific behavior of the element in question. The default behavior is to return the object itself (the optional parameter value is ignored in this generic class). Most subclasses will return a new object, one in which the parameterization is used to construct the matrix.
+
+=item get([Num $val])
+
+This is the generic dispatcher called when building the composite system. If an optional (numeric) parameter value is passed AND if the object has a parameterization, then it dispatches the object's C<get_parameterized> method. If no parameterization is available the object itself is returned.
+
+=item times (Physics::RayTransfer::Element $right) 
+
+This method performs matrix multiplication between the instance (the left matrix) and the passed in right matrix. The result is a new C<Physics::RayTransfer::Element> object containing the result of the multiplication.
+
+=item as_arrayref()
+
+A simple diagnostic method which return an array reference of the C<abcd> elements in order (note: this is in 1D C<[a, b, c, d]>).
+
+=item stability(Num $lambda)
+
+This method returns the value of C<(a+d)/2>, this quantity is useful for judging the stability of a laser cavity. It takes a number representing the wavelength of the light used, this should be in the same units as any distances employed.
+
+=item w(Num $lambda)
+
+This method returns the (Gaussian) spot size of a beam in the cavity at the observer. This is given by C<sqrt( abs(b) * $lambda / pi * sqrt( 1 / ( 1 - stability()**2 ) ) )>. It takes a number representing the wavelength of the light used, this should be in the same units as any distances employed.
+
+=pod
+
+=back
+
+=head3 SUBCLASSES
+
+=over
+
+=item Physics::RayTransfer::Observer
+
+Represents the position at which to evaluate the output (or cavity operation). Has no additional attributes or methods.
+
+=item Physics::RayTransfer::Space
+
+Represents an amount of free propagation distance. Has the additional attribute C<length>. Its C<get_parameterized> method creates a new object directly setting the C<b> attribute (length).
+
+=item Physics::RayTransfer::Mirror
+
+Represents a (possibly curved) mirror. Has the additional attribute C<radius>. Its C<get_parameterized> method returns a new object directly setting the C<c> attribute (C<c=-2/r>).
+
+=item Physics::RayTransfer::Lens
+
+Represents a lens. Has the additional attribute C<f>, indicating focal length. Note that if C<f> is not set, the C<c> matrix element is set to C<0>. Its C<get_parameterized> method returns a new object directly setting the C<c> attribute (C<c=-1/f>).
+
+=pod
+
+=back
 
 =head1 SEE ALSO
 
