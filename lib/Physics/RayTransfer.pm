@@ -333,10 +333,22 @@ A simple diagnostic method which return an array reference of the C<abcd> elemen
     return [$self->a, $self->b, $self->c, $self->d];
   }
 
+=item stability(Num $lambda)
+
+This method returns the value of C<(a+d)/2>, this quantity is useful for judging the stability of a laser cavity. It takes a number representing the wavelength of the light used, this should be in the same units as any distances employed.
+
+=cut
+
   method stability (Num $lambda) {
     my $stability = ($self->a + $self->d) / 2;
     return $stability;
   }
+
+=item w(Num $lambda)
+
+This method returns the (Gaussian) spot size of a beam in the cavity at the observer. This is given by C<sqrt( abs(b) * $lambda / pi * sqrt( 1 / ( 1 - stability()**2 ) ) )>. It takes a number representing the wavelength of the light used, this should be in the same units as any distances employed.
+
+=cut
 
   method w (Num $lambda) {
     my $stability = $self->stability($lambda);
@@ -356,7 +368,13 @@ A simple diagnostic method which return an array reference of the C<abcd> elemen
 
 =back
 
-=head2 Physics::RayTransfer::Observer
+=head3 SUBCLASSES
+
+=over
+
+=item Physics::RayTransfer::Observer
+
+Represents the position at which to evaluate the output (or cavity operation). Has no additional attributes or methods.
 
 =cut
 
@@ -365,7 +383,9 @@ class Physics::RayTransfer::Observer
 
 }
 
-=head2 Physics::RayTransfer::Space
+=item Physics::RayTransfer::Space
+
+Represents an amount of free propagation distance. Has the additional attribute C<length>. Its C<get_parameterized> method creates a new object directly setting the C<b> attribute (length).
 
 =cut
 
@@ -383,7 +403,9 @@ class Physics::RayTransfer::Space
   }
 }
 
-=head2 Physics::RayTransfer::Mirror
+=item Physics::RayTransfer::Mirror
+
+Represents a (possibly curved) mirror. Has the additional attribute C<radius>. Its C<get_parameterized> method returns a new object directly setting the C<c> attribute (C<c=-2/r>).
 
 =cut
 
@@ -414,7 +436,9 @@ class Physics::RayTransfer::Mirror
   }
 }
 
-=head2 Physics::RayTransfer::Lens
+=item Physics::RayTransfer::Lens
+
+Represents a lens. Has the additional attribute C<f>, indicating focal length. Note that if C<f> is not set, the C<c> matrix element is set to C<0>. Its C<get_parameterized> method returns a new object directly setting the C<c> attribute (C<c=-1/f>).
 
 =cut
 
@@ -444,6 +468,10 @@ class Physics::RayTransfer::Lens
     return __PACKAGE__->new( c => $c );
   }
 }
+
+=pod
+
+=back
 
 =head1 SEE ALSO
 
